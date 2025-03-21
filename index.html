@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Form Submissions</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Patient Form Submissions</h1>
+        
+        <div id="data-container">
+            <p>Connecting to Firebase...</p>            rules_version = '2';
+            service cloud.firestore {
+              match /databases/{database}/documents {
+                match /form/{document} {
+                  allow read, write: if true;
+                }
+              }
+            }
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
