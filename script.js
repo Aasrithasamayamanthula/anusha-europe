@@ -27,13 +27,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Update collection name to match your exact Firebase collection
-const COLLECTION_NAME = "form";
+// Update collection name to match your Firebase collection
+const COLLECTION_NAME = "users"; // Changed from "form" to "users"
 
 // Format data for display with specific fields
 function formatData(data, id) {
-    console.log("formatData called with:", data, id); // Add this line
-
     const item = document.createElement("div");
     item.classList.add("item");
     
@@ -41,8 +39,8 @@ function formatData(data, id) {
     header.classList.add("item-header");
     
     const title = document.createElement("div");
-    // Update to use the specific field from your form data
-    title.textContent = data.name || "Patient";
+    // Display name as title if available, otherwise show User
+    title.textContent = data.username || data.name || "User";
     
     const idElement = document.createElement("span");
     idElement.classList.add("item-id");
@@ -55,14 +53,16 @@ function formatData(data, id) {
     content.classList.add("item-content");
     
     // Format specific fields you want to display
-    const formattedData = Object.entries(data)
-        .filter(([key]) => key !== "name") // Exclude name as it's shown in header
-        .map(([key, value]) => {
-            // Format key to be more readable
-            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-            return `<strong>${formattedKey}:</strong> ${formatValue(value)}`;
-        })
-        .join("<br>");
+    let formattedData = "";
+    if (data.email) {
+        formattedData += `<strong>Email:</strong> ${data.email}<br>`;
+    }
+    if (data.phone || data.phoneNumber) {
+        formattedData += `<strong>Phone:</strong> ${data.phone || data.phoneNumber}<br>`;
+    }
+    if (data.createdAt) {
+        formattedData += `<strong>Created:</strong> ${new Date(data.createdAt).toLocaleString()}<br>`;
+    }
     
     content.innerHTML = formattedData;
     
@@ -90,55 +90,36 @@ function formatValue(value) {
 
 // Setup real-time listener
 function setupRealtimeListener() {
-    dataContainer.innerHTML = "<p class='loading'>Connecting to Firebase...</p>";
+    dataContainer.innerHTML = "<p class='loading'>Loading data...</p>";
 
     try {
-        // Listen for real-time updates
-        const unsubscribe = onSnapshot(
+        return onSnapshot(
             collection(db, COLLECTION_NAME),
             (snapshot) => {
-                console.log("onSnapshot called"); // Add this line
-                // Log snapshot metadata
-                console.log("Snapshot metadata:", snapshot.metadata);
-
-                // Clear container
                 dataContainer.innerHTML = "";
 
                 if (snapshot.empty) {
-                    console.warn("No data found in collection:", COLLECTION_NAME);
-                    dataContainer.innerHTML = "<p>No data found in collection.</p>";
+                    dataContainer.innerHTML = "<p>No data found. Please add users to the database.</p>";
                     return;
                 }
 
-                // Process each document
                 snapshot.forEach(doc => {
-                    console.log("Document data:", doc.id, doc.data()); // Log each document's data
                     const item = formatData(doc.data(), doc.id);
-
-                    // Add animation class for new items
-                    if (doc.metadata.hasPendingWrites) {
-                        item.classList.add("new-item");
-                    }
-
                     dataContainer.appendChild(item);
                 });
 
-                // Update status
-                statusElement.innerHTML = `<span class="status-connected">✓ Connected to Firestore - ${snapshot.size} items</span>`;
+                statusElement.innerHTML = `<span class="status-connected">✓ Connected - ${snapshot.size} users found</span>`;
             },
             (error) => {
-                console.error("Firestore error in onSnapshot:", error);
+                console.error("Firestore error:", error);
                 dataContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
-                statusElement.innerHTML = `<span class="status-error">✗ Error: ${error.message}</span>`;
+                statusElement.innerHTML = `<span class="status-error">✗ Connection Error</span>`;
             }
         );
-
-        // Return unsubscribe function (useful for cleanup if needed)
-        return unsubscribe;
     } catch (error) {
         console.error("Setup error:", error);
-        dataContainer.innerHTML = `<p>Failed to connect to Firestore.</p>`;
-        statusElement.innerHTML = `<span class="status-error">✗ Connection Error: ${error.message}</span>`;
+        dataContainer.innerHTML = `<p>Failed to connect to database</p>`;
+        statusElement.innerHTML = `<span class="status-error">✗ Connection Failed</span>`;
     }
 }
 
