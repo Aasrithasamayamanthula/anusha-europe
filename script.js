@@ -32,6 +32,8 @@ const COLLECTION_NAME = "form";
 
 // Format data for display with specific fields
 function formatData(data, id) {
+    console.log("formatData called with:", data, id); // Add this line
+
     const item = document.createElement("div");
     item.classList.add("item");
     
@@ -88,13 +90,14 @@ function formatValue(value) {
 
 // Setup real-time listener
 function setupRealtimeListener() {
-    dataContainer.innerHTML = "<p class='loading'>Loading data...</p>";
+    dataContainer.innerHTML = "<p class='loading'>Connecting to Firebase...</p>";
 
     try {
         // Listen for real-time updates
         const unsubscribe = onSnapshot(
             collection(db, COLLECTION_NAME),
             (snapshot) => {
+                console.log("onSnapshot called"); // Add this line
                 // Log snapshot metadata
                 console.log("Snapshot metadata:", snapshot.metadata);
 
